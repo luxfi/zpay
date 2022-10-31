@@ -1,5 +1,5 @@
 {
-  "name": "@anonymous-zether/anonymous.js",
+  "name": "@luxdefi/zsdk",
   "version": "0.1.0",
   "description": "",
   "main": "./lib",
