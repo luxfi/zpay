@@ -1,4 +1,4 @@
-# Anonymous Zether
+# ZChain
 
 This is a private payment system, an _anonymous_ extension of Bünz, Agrawal, Zamani and Boneh's [Zether protocol](https://eprint.iacr.org/2019/191.pdf).
 
@@ -6,19 +6,19 @@ The authors sketch an anonymous extension in their original manuscript. We devel
 
 ## High-level overview
 
-Anonymous Zether is an private value-tracking system, in which an Ethereum smart contract maintains encrypted account balances. Each Zether Smart Contract (ZSC) must, upon deployment, "attach" to some already-deployed ERC-20 contract; once deployed, this contract establishes special "Zether" accounts into / out of which users may _deposit_ or _withdraw_ ERC-20 funds. Having credited funds to a Zether account, its owner may privately send these funds to other Zether accounts, _confidentially_ (transferred amounts are private) and _anonymously_ (identities of transactors are private). Only the owner of each account's secret key may spend its funds, and overdraws are impossible.
+ZChain is an private value-tracking system, in which an Ethereum smart contract maintains encrypted account balances. Each ZChain Smart Contract (ZSC) must, upon deployment, "attach" to some already-deployed Lux Network contract; once deployed, this contract establishes special "ZChain" accounts into / out of which users may _deposit_ or _withdraw_ funds. Having credited funds to a ZChain account, its owner may privately send these funds to other ZChain accounts, _confidentially_ (transferred amounts are private) and _anonymously_ (identities of transactors are private). Only the owner of each account's secret key may spend its funds, and overdraws are impossible.
 
-To enhance their privacy, users should conduct as much business as possible within the ZSC.
+To enhance their privacy, users should conduct as much business as possible within ZChain.
 
-The (anonymous) Zether Smart Contract operates roughly as follows (see the [original Zether paper](https://eprint.iacr.org/2019/191.pdf) for more details). Each account consists of an ElGamal ciphertext, which encrypts the account's balance under its own public key. To send funds, Alice publishes an ordered list of public keys—which contains herself and the recipient, among other arbitrarily chosen parties—together with a corresponding list of ElGamal ciphertexts, which respectively encrypt (under the appropriate public keys) the amounts by which Alice intends to adjust these various accounts' balances. The ZSC applies these adjustments using the homomomorphic property of ElGamal encryption (with "message in the exponent"). Alice finally publishes a zero-knowledge proof which asserts that she knows her own secret key, that she owns enough to cover her deduction, that she deducted funds only from herself, and credited them only to Bob (and by the same amount she debited, no less); she of course also demonstrates that she did not alter those balances other than her own and Bob's. These adjustment ciphertexts—opaque to any outside observer—conceal who sent funds to whom, and how much was sent.
+The (anonymous) ZChain Smart Contracts operate roughly as follows (see the [original Zether paper](https://eprint.iacr.org/2019/191.pdf) for more details). Each account consists of an ElGamal ciphertext, which encrypts the account's balance under its own public key. To send funds, Alice publishes an ordered list of public keys—which contains herself and the recipient, among other arbitrarily chosen parties—together with a corresponding list of ElGamal ciphertexts, which respectively encrypt (under the appropriate public keys) the amounts by which Alice intends to adjust these various accounts' balances. The ZSC applies these adjustments using the homomomorphic property of ElGamal encryption (with "message in the exponent"). Alice finally publishes a zero-knowledge proof which asserts that she knows her own secret key, that she owns enough to cover her deduction, that she deducted funds only from herself, and credited them only to Bob (and by the same amount she debited, no less); she of course also demonstrates that she did not alter those balances other than her own and Bob's. These adjustment ciphertexts—opaque to any outside observer—conceal who sent funds to whom, and how much was sent.
 
 Users need _never_ interact directly with the ZSC; rather, our front-end client streamlines its use.
 
-Our theoretical contribution is a zero-knowledge proof protocol for the anonymous transfer statement (8) of [Bünz, et al.](https://eprint.iacr.org/2019/191.pdf), which moreover has appealing asymptotic performance characteristics; details on our techniques can be found in our [paper](docs/AnonZether.pdf). We also of course provide this implementation.
+Our theoretical contribution is a zero-knowledge proof protocol for the anonymous transfer statement (8) of [Bünz, et al.](https://eprint.iacr.org/2019/191.pdf), which moreover has appealing asymptotic performance characteristics; details on our techniques can be found in this [paper](docs/AnonZether.pdf). We also of course provide this implementation.
 
 ## Prerequisites
 
-Anonymous Zether can be deployed and tested easily using [Truffle](https://www.trufflesuite.com/truffle) and [Ganache](https://www.trufflesuite.com/ganache).
+ZChain can be deployed and tested easily using Hardhat.
 
 ### Required utilities
 * [Yarn](https://yarnpkg.com/en/docs/install#mac-stable), tested with version v1.22.4.
@@ -26,8 +26,7 @@ Anonymous Zether can be deployed and tested easily using [Truffle](https://www.t
 
 Run the following commands:
 ```bash
-npm install -g truffle
-npm install -g ganache-cli
+npm install -g hardhat
 ```
 In the main directory, type `yarn`.
 
@@ -165,7 +164,7 @@ In fact, you can see for yourself the perspective of Eve—an eavesdropper, let'
 ```
 You will see a bunch of fields; in particular, `parsed['y']` will contain the list of public keys, while `parsed['C']`, `parsed['D']` and `parsed['proof']` will contain further bytes which reveal nothing about the transaction.
 
-Anonymous Zether also supports native transaction fees. The idea is that you can circumvent the "gas linkability" issue by submitting each new transaction from a fresh, randomly generated Ethereum address, and furthermore specifying a gas price of 0. By routing a "tip" to a miner's Zether account, you may induce the miner to process your transaction anyway (see "Paying gas in ZTH through economic abstraction", Appendix F of the [original Zether paper](https://eprint.iacr.org/2019/191.pdf)). To do this, change the value at [this line](./packages/protocol/contracts/ZetherVerifier.sol#L16) before deploying, for example to 1. Finally, include the miner's Zether account as a 4th parameter in your `transfer` call. For example:
+Anonymous Zchain also supports native transaction fees. The idea is that you can circumvent the "gas linkability" issue by submitting each new transaction from a fresh, randomly generated Ethereum address, and furthermore specifying a gas price of 0. By routing a "tip" to a miner's Zchain account, you may induce the miner to process your transaction anyway (see "Paying gas in ZTH through economic abstraction", Appendix F of the [original Zchain paper](https://eprint.iacr.org/2019/191.pdf)). To do this, change the value at [this line](./packages/protocol/contracts/ZchainVerifier.sol#L16) before deploying, for example to 1. Finally, include the miner's Zchain account as a 4th parameter in your `transfer` call. For example:
 ```javascript
 > bob.transfer("Alice", 10, ["Carol", "Dave"], "Miner")
 ```
