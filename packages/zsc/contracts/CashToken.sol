@@ -4,7 +4,7 @@ pragma solidity ^0.7.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract CashToken is ERC20 {
-    constructor () ERC20("Anonymous Zether", "ZTH") {
+    constructor () ERC20("Anonymous Z", "ZTH") {
         // etc
     }
 

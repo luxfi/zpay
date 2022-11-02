@@ -59,7 +59,7 @@ contract BurnVerifier {
         uint256 y;
         uint256[32] ys;
         uint256 z;
-        uint256[1] zs; // silly. just to match zether.
+        uint256[1] zs; // silly. just to match z.
         uint256 zSum;
         uint256[32] twoTimesZSquared;
         uint256 x;
@@ -116,7 +116,7 @@ contract BurnVerifier {
         sigmaAuxiliaries.A_y = Utils.g().mul(proof.s_sk).add(statement.y.mul(proof.c.neg()));
         sigmaAuxiliaries.A_b = Utils.g().mul(proof.s_b).add(statement.CRn.mul(proof.s_sk).add(statement.CLn.mul(proof.c.neg())).mul(burnAuxiliaries.zs[0]));
         sigmaAuxiliaries.A_t = Utils.g().mul(burnAuxiliaries.t).add(burnAuxiliaries.tEval.neg()).mul(proof.c).add(Utils.h().mul(proof.s_tau)).add(Utils.g().mul(proof.s_b.neg()));
-        sigmaAuxiliaries.gEpoch = Utils.mapInto("Zether", statement.epoch);
+        sigmaAuxiliaries.gEpoch = Utils.mapInto("Z", statement.epoch);
         sigmaAuxiliaries.A_u = sigmaAuxiliaries.gEpoch.mul(proof.s_sk).add(statement.u.mul(proof.c.neg()));
 
         sigmaAuxiliaries.c = uint256(keccak256(abi.encode(burnAuxiliaries.x, sigmaAuxiliaries.A_y, sigmaAuxiliaries.A_b, sigmaAuxiliaries.A_t, sigmaAuxiliaries.A_u))).mod();

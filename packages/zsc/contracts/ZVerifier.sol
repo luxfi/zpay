@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./Utils.sol";
 import "./InnerProductVerifier.sol";
 
-contract ZetherVerifier {
+contract ZVerifier {
     using Utils for uint256;
     using Utils for Utils.G1Point;
 
@@ -15,7 +15,7 @@ contract ZetherVerifier {
     InnerProductVerifier ip;
     uint256 public constant fee = 0; // set this to be the "transaction fee". can be any integer under MAX.
 
-    struct ZetherStatement {
+    struct ZStatement {
         Utils.G1Point[] CLn;
         Utils.G1Point[] CRn;
         Utils.G1Point[] C;
@@ -25,7 +25,7 @@ contract ZetherVerifier {
         Utils.G1Point u;
     }
 
-    struct ZetherProof {
+    struct ZProof {
         Utils.G1Point BA;
         Utils.G1Point BS;
         Utils.G1Point A;
@@ -62,7 +62,7 @@ contract ZetherVerifier {
     }
 
     function verifyTransfer(Utils.G1Point[] memory CLn, Utils.G1Point[] memory CRn, Utils.G1Point[] memory C, Utils.G1Point memory D, Utils.G1Point[] memory y, uint256 epoch, Utils.G1Point memory u, bytes memory proof) public view returns (bool) {
-        ZetherStatement memory statement;
+        ZStatement memory statement;
         statement.CLn = CLn; // do i need to allocate / set size?!
         statement.CRn = CRn;
         statement.C = C;
@@ -70,11 +70,11 @@ contract ZetherVerifier {
         statement.y = y;
         statement.epoch = epoch;
         statement.u = u;
-        ZetherProof memory zetherProof = unserialize(proof);
-        return verify(statement, zetherProof);
+        ZProof memory zProof = unserialize(proof);
+        return verify(statement, zProof);
     }
 
-    struct ZetherAuxiliaries {
+    struct ZAuxiliaries {
         uint256 y;
         uint256[64] ys;
         uint256 z;
@@ -130,7 +130,7 @@ contract ZetherVerifier {
         return Utils.G1Point(0x00715f13ea08d6b51bedcde3599d8e12163e090921309d5aafc9b5bfaadbcda0, 0x27aceab598af7bf3d16ca9d40fe186c489382c21bb9d22b19cb3af8b751b959f);
     }
 
-    function verify(ZetherStatement memory statement, ZetherProof memory proof) internal view returns (bool) {
+    function verify(ZStatement memory statement, ZProof memory proof) internal view returns (bool) {
         uint256 statementHash = uint256(keccak256(abi.encode(statement.CLn, statement.CRn, statement.C, statement.D, statement.y, statement.epoch))).mod();
         AnonAuxiliaries memory anonAuxiliaries;
         anonAuxiliaries.v = uint256(keccak256(abi.encode(statementHash, proof.BA, proof.BS, proof.A, proof.B))).mod();
@@ -183,38 +183,38 @@ contract ZetherVerifier {
         anonAuxiliaries.gR = anonAuxiliaries.gR.add(Utils.g().mul(anonAuxiliaries.wPow));
         anonAuxiliaries.C_XR = anonAuxiliaries.C_XR.add(Utils.g().mul(fee.mul(anonAuxiliaries.wPow)));  // this line is new
 
-        ZetherAuxiliaries memory zetherAuxiliaries;
-        zetherAuxiliaries.y = uint256(keccak256(abi.encode(anonAuxiliaries.w))).mod();
-        zetherAuxiliaries.ys[0] = 1;
-        zetherAuxiliaries.k = 1;
+        ZAuxiliaries memory zAuxiliaries;
+        zAuxiliaries.y = uint256(keccak256(abi.encode(anonAuxiliaries.w))).mod();
+        zAuxiliaries.ys[0] = 1;
+        zAuxiliaries.k = 1;
         for (uint256 i = 1; i < 64; i++) {
-            zetherAuxiliaries.ys[i] = zetherAuxiliaries.ys[i - 1].mul(zetherAuxiliaries.y);
-            zetherAuxiliaries.k = zetherAuxiliaries.k.add(zetherAuxiliaries.ys[i]);
+            zAuxiliaries.ys[i] = zAuxiliaries.ys[i - 1].mul(zAuxiliaries.y);
+            zAuxiliaries.k = zAuxiliaries.k.add(zAuxiliaries.ys[i]);
         }
-        zetherAuxiliaries.z = uint256(keccak256(abi.encode(zetherAuxiliaries.y))).mod();
-        zetherAuxiliaries.zs[0] = zetherAuxiliaries.z.mul(zetherAuxiliaries.z);
-        zetherAuxiliaries.zs[1] = zetherAuxiliaries.zs[0].mul(zetherAuxiliaries.z);
-        zetherAuxiliaries.zSum = zetherAuxiliaries.zs[0].add(zetherAuxiliaries.zs[1]).mul(zetherAuxiliaries.z);
-        zetherAuxiliaries.k = zetherAuxiliaries.k.mul(zetherAuxiliaries.z.sub(zetherAuxiliaries.zs[0])).sub(zetherAuxiliaries.zSum.mul(1 << 32).sub(zetherAuxiliaries.zSum));
-        zetherAuxiliaries.t = proof.tHat.sub(zetherAuxiliaries.k); // t = tHat - delta(y, z)
+        zAuxiliaries.z = uint256(keccak256(abi.encode(zAuxiliaries.y))).mod();
+        zAuxiliaries.zs[0] = zAuxiliaries.z.mul(zAuxiliaries.z);
+        zAuxiliaries.zs[1] = zAuxiliaries.zs[0].mul(zAuxiliaries.z);
+        zAuxiliaries.zSum = zAuxiliaries.zs[0].add(zAuxiliaries.zs[1]).mul(zAuxiliaries.z);
+        zAuxiliaries.k = zAuxiliaries.k.mul(zAuxiliaries.z.sub(zAuxiliaries.zs[0])).sub(zAuxiliaries.zSum.mul(1 << 32).sub(zAuxiliaries.zSum));
+        zAuxiliaries.t = proof.tHat.sub(zAuxiliaries.k); // t = tHat - delta(y, z)
         for (uint256 i = 0; i < 32; i++) {
-            zetherAuxiliaries.twoTimesZSquared[i] = zetherAuxiliaries.zs[0].mul(1 << i);
-            zetherAuxiliaries.twoTimesZSquared[i + 32] = zetherAuxiliaries.zs[1].mul(1 << i);
+            zAuxiliaries.twoTimesZSquared[i] = zAuxiliaries.zs[0].mul(1 << i);
+            zAuxiliaries.twoTimesZSquared[i + 32] = zAuxiliaries.zs[1].mul(1 << i);
         }
 
-        zetherAuxiliaries.x = uint256(keccak256(abi.encode(zetherAuxiliaries.z, proof.T_1, proof.T_2))).mod();
-        zetherAuxiliaries.tEval = proof.T_1.mul(zetherAuxiliaries.x).add(proof.T_2.mul(zetherAuxiliaries.x.mul(zetherAuxiliaries.x))); // replace with "commit"?
+        zAuxiliaries.x = uint256(keccak256(abi.encode(zAuxiliaries.z, proof.T_1, proof.T_2))).mod();
+        zAuxiliaries.tEval = proof.T_1.mul(zAuxiliaries.x).add(proof.T_2.mul(zAuxiliaries.x.mul(zAuxiliaries.x))); // replace with "commit"?
 
         SigmaAuxiliaries memory sigmaAuxiliaries;
         sigmaAuxiliaries.A_y = anonAuxiliaries.gR.mul(proof.s_sk).add(anonAuxiliaries.yR[0][0].mul(proof.c.neg()));
         sigmaAuxiliaries.A_D = Utils.g().mul(proof.s_r).add(statement.D.mul(proof.c.neg())); // add(mul(anonAuxiliaries.gR, proof.s_r), mul(anonAuxiliaries.DR, proof.c.neg()));
-        sigmaAuxiliaries.A_b = Utils.g().mul(proof.s_b).add(anonAuxiliaries.DR.mul(zetherAuxiliaries.zs[0].neg()).add(anonAuxiliaries.CRnR.mul(zetherAuxiliaries.zs[1])).mul(proof.s_sk).add(anonAuxiliaries.CR[0][0].add(Utils.g().mul(fee.mul(anonAuxiliaries.wPow))).mul(zetherAuxiliaries.zs[0].neg()).add(anonAuxiliaries.CLnR.mul(zetherAuxiliaries.zs[1])).mul(proof.c.neg())));
+        sigmaAuxiliaries.A_b = Utils.g().mul(proof.s_b).add(anonAuxiliaries.DR.mul(zAuxiliaries.zs[0].neg()).add(anonAuxiliaries.CRnR.mul(zAuxiliaries.zs[1])).mul(proof.s_sk).add(anonAuxiliaries.CR[0][0].add(Utils.g().mul(fee.mul(anonAuxiliaries.wPow))).mul(zAuxiliaries.zs[0].neg()).add(anonAuxiliaries.CLnR.mul(zAuxiliaries.zs[1])).mul(proof.c.neg())));
         sigmaAuxiliaries.A_X = anonAuxiliaries.y_XR.mul(proof.s_r).add(anonAuxiliaries.C_XR.mul(proof.c.neg()));
-        sigmaAuxiliaries.A_t = Utils.g().mul(zetherAuxiliaries.t).add(zetherAuxiliaries.tEval.neg()).mul(proof.c.mul(anonAuxiliaries.wPow)).add(Utils.h().mul(proof.s_tau)).add(Utils.g().mul(proof.s_b.neg()));
-        sigmaAuxiliaries.gEpoch = Utils.mapInto("Zether", statement.epoch);
+        sigmaAuxiliaries.A_t = Utils.g().mul(zAuxiliaries.t).add(zAuxiliaries.tEval.neg()).mul(proof.c.mul(anonAuxiliaries.wPow)).add(Utils.h().mul(proof.s_tau)).add(Utils.g().mul(proof.s_b.neg()));
+        sigmaAuxiliaries.gEpoch = Utils.mapInto("Z", statement.epoch);
         sigmaAuxiliaries.A_u = sigmaAuxiliaries.gEpoch.mul(proof.s_sk).add(statement.u.mul(proof.c.neg()));
 
-        sigmaAuxiliaries.c = uint256(keccak256(abi.encode(zetherAuxiliaries.x, sigmaAuxiliaries.A_y, sigmaAuxiliaries.A_D, sigmaAuxiliaries.A_b, sigmaAuxiliaries.A_X, sigmaAuxiliaries.A_t, sigmaAuxiliaries.A_u))).mod();
+        sigmaAuxiliaries.c = uint256(keccak256(abi.encode(zAuxiliaries.x, sigmaAuxiliaries.A_y, sigmaAuxiliaries.A_D, sigmaAuxiliaries.A_b, sigmaAuxiliaries.A_X, sigmaAuxiliaries.A_t, sigmaAuxiliaries.A_u))).mod();
         require(sigmaAuxiliaries.c == proof.c, "Sigma protocol challenge equality failure.");
 
         IPAuxiliaries memory ipAuxiliaries;
@@ -222,10 +222,10 @@ contract ZetherVerifier {
         ipAuxiliaries.u_x = Utils.h().mul(ipAuxiliaries.o);
         ipAuxiliaries.hPrimes = new Utils.G1Point[](64);
         for (uint256 i = 0; i < 64; i++) {
-            ipAuxiliaries.hPrimes[i] = ip.hs(i).mul(zetherAuxiliaries.ys[i].inv());
-            ipAuxiliaries.hPrimeSum = ipAuxiliaries.hPrimeSum.add(ipAuxiliaries.hPrimes[i].mul(zetherAuxiliaries.ys[i].mul(zetherAuxiliaries.z).add(zetherAuxiliaries.twoTimesZSquared[i])));
+            ipAuxiliaries.hPrimes[i] = ip.hs(i).mul(zAuxiliaries.ys[i].inv());
+            ipAuxiliaries.hPrimeSum = ipAuxiliaries.hPrimeSum.add(ipAuxiliaries.hPrimes[i].mul(zAuxiliaries.ys[i].mul(zAuxiliaries.z).add(zAuxiliaries.twoTimesZSquared[i])));
         }
-        ipAuxiliaries.P = proof.BA.add(proof.BS.mul(zetherAuxiliaries.x)).add(gSum().mul(zetherAuxiliaries.z.neg())).add(ipAuxiliaries.hPrimeSum);
+        ipAuxiliaries.P = proof.BA.add(proof.BS.mul(zAuxiliaries.x)).add(gSum().mul(zAuxiliaries.z.neg())).add(ipAuxiliaries.hPrimeSum);
         ipAuxiliaries.P = ipAuxiliaries.P.add(Utils.h().mul(proof.mu.neg()));
         ipAuxiliaries.P = ipAuxiliaries.P.add(ipAuxiliaries.u_x.mul(proof.tHat));
         require(ip.verifyInnerProduct(ipAuxiliaries.hPrimes, ipAuxiliaries.u_x, ipAuxiliaries.P, proof.ipProof, ipAuxiliaries.o), "Inner product proof verification failed.");
@@ -330,7 +330,7 @@ contract ZetherVerifier {
         }
     }
 
-    function unserialize(bytes memory arr) internal pure returns (ZetherProof memory proof) {
+    function unserialize(bytes memory arr) internal pure returns (ZProof memory proof) {
         proof.BA = Utils.G1Point(Utils.slice(arr, 0), Utils.slice(arr, 32));
         proof.BS = Utils.G1Point(Utils.slice(arr, 64), Utils.slice(arr, 96));
         proof.A = Utils.G1Point(Utils.slice(arr, 128), Utils.slice(arr, 160));

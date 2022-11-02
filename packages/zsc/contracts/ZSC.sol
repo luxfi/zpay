@@ -5,7 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./CashToken.sol";
 import "./Utils.sol";
 import "./InnerProductVerifier.sol";
-import "./ZetherVerifier.sol";
+import "./ZVerifier.sol";
 import "./BurnVerifier.sol";
 
 contract ZSC {
@@ -13,7 +13,7 @@ contract ZSC {
     using Utils for Utils.G1Point;
 
     CashToken coin;
-    ZetherVerifier zetherVerifier;
+    ZVerifier zVerifier;
     BurnVerifier burnVerifier;
     uint256 public epochLength;
     uint256 public fee;
@@ -29,13 +29,13 @@ contract ZSC {
     event TransferOccurred(Utils.G1Point[] parties, Utils.G1Point beneficiary);
     // arg is still necessary for transfers---not even so much to know when you received a transfer, as to know when you got rolled over.
 
-    constructor(address _coin, address _zether, address _burn, uint256 _epochLength) { // visibiility won't be needed in 7.0
+    constructor(address _coin, address _z, address _burn, uint256 _epochLength) { // visibiility won't be needed in 7.0
         // epoch length, like block.time, is in _seconds_. 4 is the minimum!!! (To allow a withdrawal to go through.)
         coin = CashToken(_coin);
-        zetherVerifier = ZetherVerifier(_zether);
+        zVerifier = ZVerifier(_z);
         burnVerifier = BurnVerifier(_burn);
         epochLength = _epochLength;
-        fee = zetherVerifier.fee();
+        fee = zVerifier.fee();
         Utils.G1Point memory empty;
         pending[keccak256(abi.encode(empty))][1] = Utils.g(); // "register" the empty account...
     }
@@ -135,7 +135,7 @@ contract ZSC {
         }
         nonceSet.push(uHash);
 
-        require(zetherVerifier.verifyTransfer(CLn, CRn, C, D, y, lastGlobalUpdate, u, proof), "Transfer proof verification failed!");
+        require(zVerifier.verifyTransfer(CLn, CRn, C, D, y, lastGlobalUpdate, u, proof), "Transfer proof verification failed!");
 
         emit TransferOccurred(y, beneficiary);
     }

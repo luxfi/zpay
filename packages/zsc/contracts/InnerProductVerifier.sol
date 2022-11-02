@@ -187,7 +187,7 @@ contract InnerProductVerifier {
         ipAuxiliaries.s = new uint256[](n);
         ipAuxiliaries.s[0] = 1;
         // credit to https://github.com/leanderdulac/BulletProofLib/blob/master/truffle/contracts/EfficientInnerProductVerifier.sol for the below block.
-        // it is an unusual and clever variant of what we already do in ZetherVerifier.sol:234-249, but with the special property that it requires only 1 inversion.
+        // it is an unusual and clever variant of what we already do in ZVerifier.sol:234-249, but with the special property that it requires only 1 inversion.
         // indeed, that algorithm computes the same function as this, yet its use here would require log(N) modular inversions. inversions turn out to be expensive.
         // of course in that case don't have to invert, but rather to do x minus, etc., so in that case we might as well just use the simpler algorithm.
         for (uint256 i = 0; i < log_n; i++) ipAuxiliaries.s[0] = ipAuxiliaries.s[0].mul(ipAuxiliaries.challenges[i]);
