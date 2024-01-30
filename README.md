@@ -1,4 +1,4 @@
-# ZChain
+# ZPay
 
 This is a private payment system, an _anonymous_ extension of Bünz, Agrawal, Zamani and Boneh's [Zether protocol](https://eprint.iacr.org/2019/191.pdf).
 
